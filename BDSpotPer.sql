@@ -1,7 +1,8 @@
 --SITE:
 --https://codeshare.io/aymP99
 
--- Criar o diretório C:\BDSpotPer--
+-------------------------------------
+---- Criar o diretório C:\BDSpotPer--
 CREATE DATABASE BDSpotPer
 ON
   PRIMARY (
@@ -42,8 +43,8 @@ ON
   SIZE = 1024KB,
   FILEGROWTH = 10%
   )
----------------
---Criar tabelas
+--------------------
+---- Criar tabelas--
 
 USE BDSpotPer
 
@@ -166,6 +167,8 @@ CREATE TABLE AUX05_FAIXAS_INTERPRETES(
   	CONSTRAINT FK_AUX05_INTERPRETES FOREIGN KEY (cod_interpretes) REFERENCES interpretes
 ) on BDSpotPer_fg02
 
+-------------------
+---- Criar visões--
 CREATE VIEW V1
 WITH SCHEMABINDING
 AS
@@ -174,6 +177,8 @@ AS
 	ON p.cod_playlist = aux.cod_playlist
     group by p.nome
 
+--------------------
+---- Criar indexes--
 Create unique clustered index I_V1
 on V1 (nome)
 
@@ -255,7 +260,7 @@ AS
 	BEGIN
 	RAISERROR('Tentando entrar no album faixa do periodo barroco, que não é do tipo DDD', 10, 6)
 	ROLLBACK TRANSACTION
-	END
+	END;
 
 CREATE TRIGGER gatilho2
 ON AUX02_FAIXAS_ALBUNS
@@ -313,29 +318,31 @@ AS
 	END
 	DEALLOCATE cursor_1
     
-    
+---- ERRO:
+	'É necessário declarar a variável escalar "@codalbuns".'
+--------------------------
 CREATE TRIGGER gatilho2_cursor
 ON AUX02_FAIXAS_ALBUNS
 FOR INSERT
 AS
-	DECLARE @cod_albunss int
+	DECLARE @cod_albuns int
 	DECLARE cursor_2 CURSOR SCROLL FOR (SELECT cod_albuns FROM inserted)
 	OPEN cursor_2
-	FETCH first FROM cursor_2 INTO @cod_albunss
+	FETCH first FROM cursor_2 INTO @cod_albuns
     WHILE(@@FETCH_STATUS = 0)
     BEGIN
 	IF(
 	(SELECT COUNT(*)
 	FROM AUX02_FAIXAS_ALBUNS fa
-	WHERE fa.cod_albuns = @codalbunss) = 64)
+	WHERE fa.cod_albuns = @codalbuns) = 64)
 	BEGIN
 	RAISERROR('Album Cheio',10,6)
 	ROLLBACK TRANSACTION
 	END
-    FETCH next FROM cursor_2 INTO @cod_albunss
+    FETCH next FROM cursor_2 INTO @cod_albuns
 	END
 	DEALLOCATE cursor_2
-    
+------------
 
 CREATE TRIGGER gatilho3_cursor
 ON albuns
