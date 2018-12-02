@@ -101,10 +101,10 @@ CREATE TABLE telefones(
 CREATE TABLE albuns(
   	cod_album int not null,
   	descricao varchar(140),
-  	preco_compra float,
-  	data_compra date,
+  	preco_compra float not null,
+  	data_compra date not null,
   	data_gravacao date,
-  	tipo_compra varchar(8),
+  	tipo_compra varchar(8) not null,
   	cod_gravadora int not null,
   	CONSTRAINT PK_ALBUNS PRIMARY KEY (cod_album),
   	CONSTRAINT FK_ALBUNS_GRAVADORAS FOREIGN KEY (cod_gravadora) REFERENCES gravadoras
@@ -228,11 +228,9 @@ ADD CONSTRAINT FK_AUX02_FAIXAS FOREIGN KEY (cod_faixas) REFERENCES faixas ON DEL
 ALTER TABLE AUX01_FAIXAS_PLAYLISTS
 ADD CONSTRAINT FK_AUX01_FAIXAS FOREIGN KEY (cod_faixas) REFERENCES faixas ON DELETE CASCADE ON UPDATE CASCADE
 
-
-
---JAVA TESTAR PRA BAIXO
----------------------- FUNCIONA ATÉ AQUI
-
+--------------------
+---- Criar Função-- 
+--Entra nome do compositor e sai o codigo e a descricao dos albuns que ele participou
 CREATE FUNCTION funcao1 (@nome_entr VARCHAR(20))
 RETURNS @tab_result TABLE(Cod INT ,descricao VARCHAR(140))
 AS
@@ -244,6 +242,14 @@ BEGIN
 	WHERE c.nome = @nome_entr
 	RETURN
 END
+
+
+-----------------------
+---- Criar Restricoes--
+
+ALTER TABLE albuns  WITH CHECK ADD  CONSTRAINT CONS_MIN_DATE CHECK  ((data_compra>datefromparts((2000),(1),(1))))
+ALTER TABLE albuns  WITH CHECK ADD  CONSTRAINT CONS_TYPE_BUY CHECK  ((tipo_compra='CD' OR tipo_compra='vinil' OR tipo_compra='download'))
+ALTER TABLE faixas  WITH CHECK ADD  CONSTRAINT CONS_TYPE_MUSIC CHECK  ((tipo_gravacao='ADD' OR tipo_gravacao='DDD'))
 
 CREATE TRIGGER gatilho1
 ON AUX02_FAIXAS_ALBUNS
@@ -269,15 +275,11 @@ AS
 	IF(
 	(SELECT COUNT(*)
 	FROM AUX02_FAIXAS_ALBUNS fa
-	WHERE fa.cod_albuns = (SELECT cod_albuns FROM inserted)) = 64)
+	WHERE fa.cod_albuns = (SELECT cod_albuns FROM inserted)) = 65)
 	BEGIN
 	RAISERROR('Album Cheio',10,6)
 	ROLLBACK TRANSACTION
 	END
-
-ALTER TABLE albuns  WITH CHECK ADD  CONSTRAINT CONS_MIN_DATE CHECK  ((data_compra>datefromparts((2000),(1),(1))))
-ALTER TABLE albuns  WITH CHECK ADD  CONSTRAINT CONS_TYPE_BUY CHECK  ((tipo_compra='CD' OR tipo_compra='vinil' OR tipo_compra='download'))
-ALTER TABLE faixas  WITH CHECK ADD  CONSTRAINT CONS_TYPE_MUSIC CHECK  ((tipo_gravacao='ADD' OR tipo_gravacao='DDD'))
 
 
 CREATE TRIGGER gatilho3
@@ -290,8 +292,6 @@ AS
 	ROLLBACK TRANSACTION
 	END
     
-
---CURSOR Duvidosas Fias do Cabrunco @!@
 
 CREATE TRIGGER gatilho1_cursor
 ON AUX02_FAIXAS_ALBUNS
@@ -318,9 +318,6 @@ AS
 	END
 	DEALLOCATE cursor_1
     
----- ERRO:
-	'É necessário declarar a variável escalar "@codalbuns".'
---------------------------
 CREATE TRIGGER gatilho2_cursor
 ON AUX02_FAIXAS_ALBUNS
 FOR INSERT
@@ -334,7 +331,7 @@ AS
 	IF(
 	(SELECT COUNT(*)
 	FROM AUX02_FAIXAS_ALBUNS fa
-	WHERE fa.cod_albuns = @codalbuns) = 64)
+	WHERE fa.cod_albuns = @cod_albuns) = 65)
 	BEGIN
 	RAISERROR('Album Cheio',10,6)
 	ROLLBACK TRANSACTION
@@ -342,7 +339,7 @@ AS
     FETCH next FROM cursor_2 INTO @cod_albuns
 	END
 	DEALLOCATE cursor_2
-------------
+
 
 CREATE TRIGGER gatilho3_cursor
 ON albuns
@@ -363,13 +360,11 @@ AS
 	END
 	DEALLOCATE cursor_3
     
+------------------
+-- Vamos povoar?--
 
 
-
----------------------- PRECISA TESTAR ATE AQUI kkkk
-
-
-
-
+----------------
+---- Consultas--
 
 
