@@ -58,17 +58,17 @@ CREATE TABLE playlists(
 
 CREATE TABLE composicoes(
 	cod_composicoes int NOT NULL,
-  	descricao varchar(140),
    	tipo_composicao varchar(20),
+  	descricao varchar(140),
   	CONSTRAINT PK_COMPOSICOES PRIMARY KEY (cod_composicoes)
 ) on BDSpotPer_fg02
 
 CREATE TABLE faixas(
 	cod_faixas int NOT NULL,
   	cod_composicoes int NOT NULL,
-	descricao varchar(140),
 	duracao decimal(5,2),
 	tipo_gravacao varchar(20) NOT NULL,
+	descricao varchar(140),
   	CONSTRAINT PK_FAIXAS PRIMARY KEY (cod_faixas),
   	CONSTRAINT FK_FAIXAS_COMPOSICOES FOREIGN KEY (cod_composicoes) REFERENCES composicoes
 ) on BDSpotPer_fg01
@@ -100,12 +100,12 @@ CREATE TABLE telefones(
 
 CREATE TABLE albuns(
   	cod_album int NOT NULL,
-  	descricao varchar(140),
   	preco_compra float NOT NULL,
   	data_compra date NOT NULL,
   	data_gravacao date,
   	tipo_compra varchar(8) NOT NULL,
   	cod_gravadora int NOT NULL,
+  	descricao varchar(140),
   	CONSTRAINT PK_ALBUNS PRIMARY KEY (cod_album),
   	CONSTRAINT FK_ALBUNS_GRAVADORAS FOREIGN KEY (cod_gravadora) REFERENCES gravadoras
 ) on BDSpotPer_fg02
@@ -177,10 +177,11 @@ AS
 	ON p.cod_playlist = aux.cod_playlist
     group by p.nome
 
---------------------
----- Criar indexes--
 Create unique clustered index I_V1
 on V1 (nome)
+
+--------------------
+---- Criar indexes--
 
 ALTER TABLE AUX05_FAIXAS_INTERPRETES
 DROP CONSTRAINT PK_AUX05_FAIXAS_INTERPRETES
@@ -197,6 +198,9 @@ DROP CONSTRAINT FK_AUX02_FAIXAS
 ALTER TABLE AUX01_FAIXAS_PLAYLISTS
 DROP CONSTRAINT FK_AUX01_FAIXAS
 
+-----------------------------
+---- Perguntar ao professor--
+/*
 ALTER TABLE faixas
 DROP CONSTRAINT PK_faixas
 
@@ -205,16 +209,17 @@ ON faixas (cod_faixas)
 WITH (PAD_INDEX=OFF, FILLFACTOR=100)
 ON BDSpotPer_fg02
 
+ALTER TABLE faixas
+ADD CONSTRAINT PK_faixas PRIMARY KEY (cod_faixas)
+*/
+
 CREATE NONCLUSTERED INDEX IndiceFaixaSecundario
-ON faixas (tipo_gravacao)
+ON faixas (cod_composicoes)
 WITH (PAD_INDEX=OFF, FILLFACTOR=100)
 ON BDSpotPer_fg02
 
 ALTER TABLE AUX05_FAIXAS_INTERPRETES
 ADD CONSTRAINT PK_AUX05_FAIXAS_INTERPRETES PRIMARY KEY (cod_faixas, cod_interpretes)
-
-ALTER TABLE faixas
-ADD CONSTRAINT PK_faixas PRIMARY KEY (cod_faixas)
 
 ALTER TABLE AUX05_FAIXAS_INTERPRETES
 ADD CONSTRAINT FK_AUX05_FAIXAS FOREIGN KEY (cod_faixas) REFERENCES faixas ON DELETE CASCADE ON UPDATE CASCADE
@@ -249,7 +254,7 @@ END
 
 ALTER TABLE albuns  WITH CHECK ADD  CONSTRAINT CONS_MIN_DATE CHECK  ((data_compra>datefromparts((2000),(1),(1))))
 ALTER TABLE albuns  WITH CHECK ADD  CONSTRAINT CONS_TYPE_BUY CHECK  ((tipo_compra='CD' OR tipo_compra='vinil' OR tipo_compra='download'))
-ALTER TABLE faixas  WITH CHECK ADD  CONSTRAINT CONS_TYPE_MUSIC CHECK  ((tipo_gravacao='ADD' OR tipo_gravacao='DDD'))
+ALTER TABLE faixas  WITH CHECK ADD  CONSTRAINT CONS_TYPE_MUSIC CHECK  ((tipo_gravacao='ADD' OR tipo_gravacao='DDD'));
 
 CREATE TRIGGER gatilho1
 ON AUX02_FAIXAS_ALBUNS
@@ -280,7 +285,6 @@ AS
 	RAISERROR('Album Cheio',15,1)
 	ROLLBACK TRANSACTION
 	END
-
 
 CREATE TRIGGER gatilho3
 ON albuns
