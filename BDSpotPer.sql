@@ -359,6 +359,7 @@ AS
 	FETCH next FROM cursor_3 INTO @preco_comprass
 	END
 	DEALLOCATE cursor_3
+	 
 
 CREATE TRIGGER gatilho4
 ON AUX01_FAIXAS_PLAYLISTS
