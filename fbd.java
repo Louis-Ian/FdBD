@@ -103,17 +103,40 @@ public class fbd {
         ResultSetMetaData rsmet = rs.getMetaData();
         int n_column = rsmet.getColumnCount();
         String change;
-        while(rs.next()){
+        	while(rs.next()){
             for (int i = 1; i<=n_column;i++) {
                 change = rs.getString(i);
                 System.out.print(change+" "); 
             }
             System.out.println("");
-        }}catch(SQLException ex){
+        
+        	}
+        	
+        CREATE FUNCTION funcao2(@entrada int)
+        returns int
+        as
+        	if( exists(select * from AUX01_FAIXAS_PLAYLIST where cod_faixas=@entrada) )
+        		return select cod_playlist from AUX01_FAIXAS_PLAYLIST where cod_faixas = @entrada;
+        	else
+        		return NULL;
+        
+        int flag = stmt.execute_Query("exec funcao2(entrada)");
+        if(flag!=null){
+        	
+        	ResultSet rs = stmt.executeQuery("select * from AUX01_FAIXAS_PLAYLISTS where cod_faixas="+entrada);
+        	conn.setAutoCommit(false);
+        	PreparedStatement ps = conn.prepareStatement("update AUX01_FAIXAS_PLAYLISTS("+entrada+",exec funcao2("+entrada+","+rs.getInt(2)+",getdate())");
+            ps.executeUpdate();
+            conn.commit();
+            conn.setAutoCommit(true);
+        	
+        }
+        }catch(SQLException ex){
             System.out.println("SQLException: " + ex.getMessage());
             System.out.println("SQLSQLState: " + ex.getSQLState());
             System.out.println("SQLVendorError: " + ex.getErrorCode());
-        } 
+        }
+        
         while(sc.hasNext()){
             entrada = sc.nextInt();
             if(entrada == 0) break;
