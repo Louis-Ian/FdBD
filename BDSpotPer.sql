@@ -68,7 +68,7 @@ CREATE TABLE faixas(
   	cod_composicoes int NOT NULL,
 	descricao varchar(140),
 	duracao decimal(5,2),
-	tipo_gravacao varchar(20),
+	tipo_gravacao varchar(20) NOT NULL,
   	CONSTRAINT PK_FAIXAS PRIMARY KEY (cod_faixas),
   	CONSTRAINT FK_FAIXAS_COMPOSICOES FOREIGN KEY (cod_composicoes) REFERENCES composicoes
 ) on BDSpotPer_fg01
@@ -99,20 +99,20 @@ CREATE TABLE telefones(
 ) on BDSpotPer_fg02
 
 CREATE TABLE albuns(
-  	cod_album int not null,
+  	cod_album int NOT NULL,
   	descricao varchar(140),
-  	preco_compra float not null,
-  	data_compra date not null,
+  	preco_compra float NOT NULL,
+  	data_compra date NOT NULL,
   	data_gravacao date,
-  	tipo_compra varchar(8) not null,
-  	cod_gravadora int not null,
+  	tipo_compra varchar(8) NOT NULL,
+  	cod_gravadora int NOT NULL,
   	CONSTRAINT PK_ALBUNS PRIMARY KEY (cod_album),
   	CONSTRAINT FK_ALBUNS_GRAVADORAS FOREIGN KEY (cod_gravadora) REFERENCES gravadoras
 ) on BDSpotPer_fg02
 
 CREATE TABLE AUX02_FAIXAS_ALBUNS(
-   	cod_faixas int not null,
-	cod_albuns int not null
+   	cod_faixas int NOT NULL,
+	cod_albuns int NOT NULL,
   	CONSTRAINT PK_AUX02_FAIXAS_ALBUNS PRIMARY KEY (cod_albuns, cod_faixas),
   	CONSTRAINT FK_AUX02_FAIXAS FOREIGN KEY (cod_faixas) REFERENCES faixas,
   	CONSTRAINT FK_AUX02_ALBUNS FOREIGN KEY (cod_albuns) REFERENCES albuns
@@ -264,7 +264,7 @@ AS
 		WHERE f.cod_faixas = fc.cod_faixas AND fc.cod_compositores = c.cod_compositores AND c.cod_compositores = pc.cod_compositores AND pc.cod_periodos = p.cod_periodos AND p.descrição = 'Barroco' AND f.tipo_gravacao <> 'DDD')
 	)
 	BEGIN
-	RAISERROR('Tentando entrar no album faixa do periodo barroco, que não é do tipo DDD', 10, 6)
+	RAISERROR('Tentando entrar no album faixa do periodo barroco, que não é do tipo DDD', 15, 1)
 	ROLLBACK TRANSACTION
 	END;
 
@@ -277,18 +277,18 @@ AS
 	FROM AUX02_FAIXAS_ALBUNS fa
 	WHERE fa.cod_albuns = (SELECT cod_albuns FROM inserted)) = 65)
 	BEGIN
-	RAISERROR('Album Cheio',10,6)
+	RAISERROR('Album Cheio',15,1)
 	ROLLBACK TRANSACTION
 	END
 
 
 CREATE TRIGGER gatilho3
 ON albuns
-FOR INSERT
+FOR INSERT,UPDATE
 AS
 	IF((SELECT preco_compra FROM inserted) > (SELECT 3*AVG(preco_compra) FROM albuns a,AUX02_FAIXAS_ALBUNS fa,faixas f WHERE a.cod_album=fa.cod_albuns AND fa.cod_faixas=f.cod_faixas AND f.tipo_gravacao='DDD'))
 	BEGIN
-	RAISERROR('Preco invalido',10,6)
+	RAISERROR('Preco invalido',15,1)
 	ROLLBACK TRANSACTION
 	END
     
@@ -359,6 +359,24 @@ AS
 	FETCH next FROM cursor_3 INTO @preco_comprass
 	END
 	DEALLOCATE cursor_3
+
+CREATE TRIGGER gatilho4
+ON AUX01_FAIXAS_PLAYLISTS
+FOR INSERT,DELETE
+AS
+	BEGIN
+
+		UPDATE playlists
+		SET duração += f.duracao 
+		FROM faixas f, inserted i
+		WHERE f.cod_faixas = i.cod_faixas
+	
+		UPDATE playlists
+		SET duração -= f.duracao 
+		FROM faixas f, deleted i
+		WHERE f.cod_faixas = i.cod_faixas
+		
+	END
     
 ------------------
 -- Vamos povoar?--
