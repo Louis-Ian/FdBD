@@ -248,6 +248,22 @@ BEGIN
 	RETURN
 END
 
+CREATE FUNCTION funcao2(@entrada int)
+returns @ret table (cod_playlist int)
+as
+begin
+	if((select count(*) from AUX01_FAIXAS_PLAYLISTS fp where fp.cod_faixas=@entrada)>=1) 
+	begin
+		insert into @ret
+		select fp.cod_playlist
+		from AUX01_FAIXAS_PLAYLISTS fp
+		where fp.cod_faixas = @entrada
+	end
+	else
+		insert into @ret values (0)
+	
+	return 
+end
 
 -----------------------
 ---- Criar Restricoes--

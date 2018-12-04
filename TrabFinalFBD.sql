@@ -549,8 +549,10 @@ AS
 	BEGIN
 		UPDATE playlists
 		SET duração += f.duracao 
-		FROM faixas f, inserted i
-		WHERE f.cod_faixas = i.cod_faixas
+		FROM faixas f,inserted i, playlists p
+		WHERE f.cod_faixas=i.cod_faixas and p.cod_playlist=i.cod_playlist
+
+
 	END
 
 CREATE TRIGGER 
@@ -558,8 +560,70 @@ CREATE TRIGGER
 insert into playlists values (1,null,0,GETDATE())
 insert into AUX01_FAIXAS_PLAYLISTS values (1,70,0,DATEfromPARTs(2015,2,1))
 delete from playlists
+delete from AUX01_FAIXAS_PLAYLISTS
 
 insert into faixas values (70,1,null,21,'ADD')
 
 select *
+from faixas
+
+
+CREATE FUNCTION funcao2(@entrada int)
+returns @ret table (cod_playlist int)
+as
+begin
+	if((select count(*) from AUX01_FAIXAS_PLAYLISTS fp where fp.cod_faixas=@entrada)>=1) 
+	begin
+		insert into @ret
+		select fp.cod_playlist
+		from AUX01_FAIXAS_PLAYLISTS fp
+		where fp.cod_faixas = @entrada
+	end
+	else
+		insert into @ret values (0)
+	
+	return 
+end
+
+select count(*) from AUX01_FAIXAS_PLAYLISTS fp where fp.cod_faixas=1
+select *
+from funcao2(1)
+
+select *
+from AUX01_FAIXAS_PLAYLISTS fp
+
+
+select fp.cod_playlist
+from AUX01_FAIXAS_PLAYLISTS fp
+where fp.cod_faixas = 0
+
+
+select *
 from playlists
+
+select *
+from albuns
+
+select *
+from AUX01_FAIXAS_PLAYLISTS
+
+delete from AUX01_FAIXAS_PLAYLISTS
+where cod_playlist = dbo.funcao2(1)
+insert into AUX01_FAIXAS_PLAYLISTS values (4,1,0,GETDATE())
+
+CREATE FUNCTION funcao1 (@nome_entr VARCHAR(20))
+RETURNS @tab_result TABLE(Cod INT ,descricao VARCHAR(140))
+AS
+BEGIN
+	INSERT INTO @tab_result
+	SELECT a.cod_album, a.descricao
+	FROM albuns a inner join AUX02_FAIXAS_ALBUNS fb inner join faixas f inner join AUX03_FAIXAS_COMPOSITORES fc inner join compositores c
+	ON fc.cod_compositores=c.cod_compositores ON f.cod_faixas = fc.cod_faixas ON fb.cod_faixas = f.cod_faixas ON a.cod_album=fb.cod_albuns
+	WHERE c.nome = @nome_entr
+	RETURN
+END
+
+
+select cod_playlist from funcao2(1)
+
+select * from AUX01_FAIXAS_PLAYLISTS
