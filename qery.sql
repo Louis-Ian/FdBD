@@ -2,7 +2,7 @@
 --https://codeshare.io/aymP99
 
 -------------------------------------
----- Criar o diretÛrio C:\BDSpotPer--
+---- Criar o diret√≥rio C:\BDSpotPer--
 CREATE DATABASE BDSpotPer
 ON
   PRIMARY (
@@ -51,8 +51,8 @@ USE BDSpotPer
 CREATE TABLE playlists(
 	cod_playlist int NOT NULL,
   	nome varchar(20),
-  	duraÁ„o float,
-  	criaÁ„o	date,
+  	dura√ß√£o float,
+  	cria√ß√£o	date,
   	CONSTRAINT PK_PLAYLISTS PRIMARY KEY (cod_playlist)
 ) on BDSpotPer_fg01
 
@@ -86,7 +86,7 @@ CREATE TABLE AUX01_FAIXAS_PLAYLISTS(
 CREATE TABLE gravadoras(
 	cod_gravadoras int NOT NULL,
   	nome varchar(29),
-  	endereÁo varchar(29),
+  	endere√ßo varchar(29),
   	homepage varchar(39),
   	CONSTRAINT PK_GRAVADORAS PRIMARY KEY (cod_gravadoras)
 ) on BDSpotPer_fg02
@@ -121,7 +121,7 @@ CREATE TABLE AUX02_FAIXAS_ALBUNS(
 CREATE TABLE periodos(
 	cod_periodos int NOT NULL,
   	intervalo int,
-  	descriÁ„o varchar(140),
+  	descri√ß√£o varchar(140),
   	CONSTRAINT PK_PERIODOS PRIMARY KEY (cod_periodos)
 ) on BDSpotPer_fg02
 
@@ -171,7 +171,7 @@ CREATE TABLE AUX05_FAIXAS_INTERPRETES(
 ) on BDSpotPer_fg02
 
 -------------------
----- Criar visıes--
+---- Criar vis√µes--
 CREATE VIEW V1
 WITH SCHEMABINDING
 AS
@@ -235,7 +235,7 @@ ALTER TABLE AUX01_FAIXAS_PLAYLISTS
 ADD CONSTRAINT FK_AUX01_FAIXAS FOREIGN KEY (cod_faixas) REFERENCES faixas ON DELETE CASCADE ON UPDATE CASCADE
 
 --------------------
----- Criar FunÁ„o-- 
+---- Criar Fun√ß√£o-- 
 --Entra nome do compositor e sai o codigo e a descricao dos albuns que ele participou
 CREATE FUNCTION funcao1 (@nome_entr VARCHAR(20))
 RETURNS @tab_result TABLE(Cod INT ,descricao VARCHAR(140))
@@ -283,10 +283,10 @@ AS
 		IN
 		(SELECT f.cod_faixas 
 		FROM faixas f, AUX03_FAIXAS_COMPOSITORES fc ,compositores c, periodos p 
-		WHERE f.cod_faixas = fc.cod_faixas AND fc.cod_compositores = c.cod_compositores AND c.cod_periodos = p.cod_periodos AND p.descriÁ„o = 'Barroco' AND f.tipo_gravacao = 'ADD')
+		WHERE f.cod_faixas = fc.cod_faixas AND fc.cod_compositores = c.cod_compositores AND c.cod_periodos = p.cod_periodos AND p.descri√ß√£o = 'Barroco' AND f.tipo_gravacao = 'ADD')
 	)
 	BEGIN
-	RAISERROR('SÛ pode adquirir faixa do periodo barroco se for DDD', 15, 1)
+	RAISERROR('S√≥ pode adquirir faixa do periodo barroco se for DDD', 15, 1)
 	ROLLBACK TRANSACTION
 	END;
 
@@ -329,10 +329,10 @@ AS
 		NOT IN
 		(SELECT f.cod_faixas 
 		FROM faixas f, AUX03_FAIXAS_COMPOSITORES fc ,compositores c, AUX04_PERIODOS_COMPOSITORES pc, periodos p 
-		WHERE f.cod_faixas = fc.cod_faixas and fc.cod_compositores = c.cod_compositores and c.cod_compositores = pc.cod_compositores and pc.cod_periodos = p.cod_periodos and p.descriÁ„o = 'Barroco' and f.tipo_gravacao <> 'DDD')
+		WHERE f.cod_faixas = fc.cod_faixas and fc.cod_compositores = c.cod_compositores and c.cod_compositores = pc.cod_compositores and pc.cod_periodos = p.cod_periodos and p.descri√ß√£o = 'Barroco' and f.tipo_gravacao <> 'DDD')
 	)
 	BEGIN
-	RAISERROR('Tentando entrar no album  faixa do periodo barroco, que n„o È do tipo DDD', 10, 6)
+	RAISERROR('Tentando entrar no album  faixa do periodo barroco, que n√£o √© do tipo DDD', 10, 6)
 	ROLLBACK TRANSACTION
 	END
 	FETCH next FROM cursor_1 INTO @cod_faixass
@@ -389,12 +389,12 @@ AS
 	BEGIN
 
 		UPDATE playlists
-		SET duraÁ„o += f.duracao 
+		SET dura√ß√£o += f.duracao 
 		FROM faixas f, inserted i
 		WHERE f.cod_faixas = i.cod_faixas
 	
 		UPDATE playlists
-		SET duraÁ„o -= f.duracao 
+		SET dura√ß√£o -= f.duracao 
 		FROM faixas f, deleted i
 		WHERE f.cod_faixas = i.cod_faixas
 		
@@ -432,18 +432,74 @@ select *
 from albuns a
 where a.preco_compra >= (select AVG(preco_compra) from albuns)
 
-select g.nome, COUNT(*) as 'n playlist'
-from gravadoras g, albuns a, AUX02_FAIXAS_ALBUNS fa, faixas f, AUX01_FAIXAS_PLAYLISTS fp, playlists p,AUX03_FAIXAS_COMPOSITORES fc , compositores c
-where g.cod_gravadoras = a.cod_gravadora and fa.cod_faixas=f.cod_faixas and f.cod_faixas=fp.cod_faixas and fp.cod_playlist = p.cod_playlist and f.cod_faixas=fc.cod_faixas and fc.cod_compositores=c.cod_compositores
-group by g.nome
-having COUNT(*) >= all (select COUNT(*) from gravadoras g, albuns a, AUX02_FAIXAS_ALBUNS fa, faixas f, AUX01_FAIXAS_PLAYLISTS fp, playlists p,AUX03_FAIXAS_COMPOSITORES fc , compositores c
-						where g.cod_gravadoras = a.cod_gravadora and fa.cod_faixas=f.cod_faixas and f.cod_faixas=fp.cod_faixas and fp.cod_playlist = p.cod_playlist 
-						and f.cod_faixas=fc.cod_faixas and fc.cod_compositores=c.cod_compositores 
-						group by g.nome
-						having (select COUNT(*)) >=1 )
-
 select nome
 from compositores
 group by nome
 having COUNT(*) >= all (select COUNT(*) from faixas f, AUX01_FAIXAS_PLAYLISTS fp, playlists p,AUX03_FAIXAS_COMPOSITORES fc , compositores c
 						where f.cod_faixas = fp.cod_faixas and fp.cod_playlist=p.cod_playlist)
+
+create function f3 () -- FUNCIONA COMO AUX_FAIXAS_PLAYLISTS, ENTRETANTO PEGANDO APENAS PLAYLISTS COM FAIXAS COMPOSTAS POR DVORACK
+returns @ret table (cod_playlists int,cod_faixas int)
+as
+begin
+	insert into @ret
+	select fp.cod_playlist,f.cod_faixas
+	from faixas f, AUX03_FAIXAS_COMPOSITORES fc, compositores c, AUX01_FAIXAS_PLAYLISTS fp
+	where f.cod_faixas = fc.cod_faixas and fc.cod_compositores = c.cod_compositores and c.nome = 'Dvorack' and fp.cod_faixas=f.cod_faixas
+	return
+end
+
+select cod_playlist, cod_faixas -- RETORNA COD_PLAYLIST, COD_FAIXAS DE AUX_FAIXAS_PLAYLIST, COM PELO MENOS UMA FAIXA COMPOSTA POR DVORACK
+from AUX01_FAIXAS_PLAYLISTS 
+where cod_playlist in (select cod_playlist from f3())
+
+select g.nome -- MOSTRA NOME DA GRAVADORA COM O MAIOR NUMERO DE PLAYLISTS, LEVANDO EM CONTA APENAS PLAYLISTS QUE POSSUEM PELO MENOS UMA FAIXA COMPOSTA POR DVORACK
+from gravadoras g, albuns a, AUX02_FAIXAS_ALBUNS fa, faixas f, (select cod_playlist, cod_faixas from AUX01_FAIXAS_PLAYLISTS where cod_playlist in (select cod_playlist from f3()) ) as  p
+where g.cod_gravadoras = a.cod_gravadora and a.cod_album = fa.cod_albuns and fa.cod_faixas = f.cod_faixas
+and f.cod_faixas = p.cod_faixas
+group by g.nome
+having count(distinct p.cod_playlist) >= all (
+	select count(distinct p.cod_playlist)
+	from gravadoras g, albuns a, AUX02_FAIXAS_ALBUNS fa, faixas f, (select cod_playlist, cod_faixas from AUX01_FAIXAS_PLAYLISTS where cod_playlist in (select cod_playlist from f3()) ) as  p
+	where g.cod_gravadoras = a.cod_gravadora and a.cod_album = fa.cod_albuns and fa.cod_faixas = f.cod_faixas
+	and f.cod_faixas = p.cod_faixas
+	group by g.nome
+)
+
+
+
+create function f4 (@entrada int) -- RETORNA AS FAIXAS [CONCERTO && BARROCO] DA PLAYLIST DE ENTRADA
+returns @ret table (cod_playlists int,cod_faixas int)
+as
+begin
+	insert into @ret
+	select f.cod_faixas
+	from faixas f, AUX03_FAIXAS_COMPOSITORES fc, compositores c, AUX01_FAIXAS_PLAYLISTS fp, composicoes c2, periodos p
+	where f.cod_faixas = fc.cod_faixas and fc.cod_compositores = c.cod_compositores and fp.cod_faixas=f.cod_faixas and f.cod_composicoes = c2.cod_composicoes and p.cod_periodos=c.cod_periodos
+	and c2.tipo_composicao = 'Concerto' and p.descri√ß√£o='Barroco' and fp.cod_playlist = @entrada
+	return
+end
+
+create function f5() -- RETORNA PLAYLISTS QUE TODAS AS FAIXAS SAO COMPOSICOES DO TIPO CONCERtO E DO PERIODO BARROCO
+returns @ret table (cod_playlists int)
+as
+begin
+	declare c_1 cursor scroll for
+	select cod_playlist from AUX01_FAIXAS_PLAYLISTS
+	declare @cod int 
+	open c_1
+	fetch first from c_1 into @cod 
+	while(@@FETCH_STATUS = 0)
+	begin
+	if(
+		(select count(*) from f4(@cod))
+		=
+		(select count(*) from AUX01_FAIXAS_PLAYLISTS where cod_playlist=@cod)
+	)
+	begin
+		insert into @ret
+	end
+	fetch next from c_1 into @cod
+	end	
+	deallocate c_1
+end
