@@ -9,18 +9,21 @@ import java.util.Scanner;
 
 public class fbd {
     private Connection conn;
+    public boolean error;
     public fbd(String url){   
         try{
             Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver").newInstance();
-            this.conn = DriverManager.getConnection(url,"sa","123456");
+            this.conn = DriverManager.getConnection(url,"sa","Admin123");
             System.out.println("Conexão Obtida com sucesso");
+            this.error = false;
         }catch(SQLException ex){
             System.out.println("SQLException: " + ex.getMessage());
             System.out.println("SQLSQLState: " + ex.getSQLState());
             System.out.println("SQLVendorError: " + ex.getErrorCode());
-           
+            this.error = true;
         }catch(Exception e){
             System.out.println("Não foi possivel conectar ao banco" + e);
+            this.error = true;
         }
     };
    
@@ -49,6 +52,7 @@ public class fbd {
                     System.out.println("SQLException: " + ex.getMessage());
                     conn.rollback();
                 } catch(SQLException e2) {
+                	error = true;
                     System.err.println("Erro na transação!"+e2);
                 }
             }
@@ -83,6 +87,7 @@ public class fbd {
                 System.out.println("");
             }  
         }catch(SQLException ex){
+        	error = true;
             System.out.println("SQLException: " + ex.getMessage());
             System.out.println("SQLSQLState: " + ex.getSQLState());
             System.out.println("SQLVendorError: " + ex.getErrorCode());
@@ -116,6 +121,7 @@ public void ouvir_musica(int entrada) {
         	
         }
         }catch(SQLException ex){
+        	error = true;
             System.out.println("SQLException: " + ex.getMessage());
             System.out.println("SQLSQLState: " + ex.getSQLState());
             System.out.println("SQLVendorError: " + ex.getErrorCode());
@@ -139,6 +145,7 @@ public void ouvir_musica(int entrada) {
                 }
                 System.out.println("");
             }}catch(SQLException ex){
+            	error = true;
                 System.out.println("SQLException: " + ex.getMessage());
                 System.out.println("SQLSQLState: " + ex.getSQLState());
                 System.out.println("SQLVendorError: " + ex.getErrorCode());
@@ -164,6 +171,7 @@ public void ouvir_musica(int entrada) {
                      System.out.println("SQLException: " + ex.getMessage());
                      conn.rollback();
                  } catch(SQLException e2) {
+                	 error = true;
                      System.err.println("Erro na transação!"+e2);
                  }
              }
@@ -185,6 +193,7 @@ public void ouvir_musica(int entrada) {
                     System.out.println("SQLException: " + ex.getMessage());
                     conn.rollback();
                 } catch(SQLException e2) {
+               	 	error = true;
                     System.err.println("Erro na transação!"+e2);
                 }
             }
@@ -199,6 +208,7 @@ public void ouvir_musica(int entrada) {
             	inserir_faixa_playlist(rs.getInt(1), cod_playlist);
             }      
         }catch(SQLException ex){
+        	error =true;
             System.out.println("SQLException: " + ex.getMessage());
             System.out.println("SQLSQLState: " + ex.getSQLState());
             System.out.println("SQLVendorError: " + ex.getErrorCode());
@@ -226,6 +236,7 @@ public void ouvir_musica(int entrada) {
                     System.out.println("SQLException: " + ex.getMessage());
                     conn.rollback();
                 } catch(SQLException e2) {
+            		error = true;
                     System.err.println("Erro na transação!"+e2);
                 }
             }
@@ -233,14 +244,15 @@ public void ouvir_musica(int entrada) {
     }
    
     public static void main(String[] args) {
-        String url = "jdbc:sqlserver://localhost:1433;"
-                +"databaseName=BDSpotPer2";
+        String url = "jdbc:sqlserver://localhost:1141;"
+                +"databaseName=BDSpotPer";
         fbd c = new fbd(url);
         int opcao = 0;
         Scanner teclado  = new Scanner(System.in);
         
         
         do{ 
+        	if(c.error) break;
         	System.out.println("0-Sair");
             System.out.println("1-Ouvir Musica");
             System.out.println("2-Listar Albuns");
@@ -273,7 +285,7 @@ public void ouvir_musica(int entrada) {
                     break;
                 case 6:
                 	System.out.println("Entre com a ref do album que deseja alterar, seguido de"
-                			+ " cod,ref,preco_compra,data_compra,data_gravacao,tipo_compra,cod_gravadora");
+                			+ " cod,ref,preco_compra,tipo_compra,cod_gravadora");
                     c.alterar_album(teclado.nextLine(),teclado.nextInt(),teclado.next(),teclado.nextInt(),teclado.next(),teclado.nextInt());
                     break;
                 case 0:
