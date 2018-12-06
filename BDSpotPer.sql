@@ -118,15 +118,24 @@ CREATE TABLE AUX02_FAIXAS_ALBUNS(
   	CONSTRAINT FK_AUX02_ALBUNS FOREIGN KEY (cod_albuns) REFERENCES albuns
 ) on BDSpotPer_fg02
 
+CREATE TABLE periodos(
+	cod_periodos int NOT NULL,
+  	intervalo int,
+  	descrição varchar(140),
+  	CONSTRAINT PK_PERIODOS PRIMARY KEY (cod_periodos)
+) on BDSpotPer_fg02
+
 CREATE TABLE compositores(
 	cod_compositores int NOT NULL,
+	cod_periodos int NOT NULL,
   	nome varchar(20),
   	data_nasc date,
   	data_morte date,
   	pais varchar(20),
   	cidade varchar(29),
   	estado varchar(20),
-  	CONSTRAINT PK_COMPOSITORES PRIMARY KEY(cod_compositores)
+  	CONSTRAINT PK_COMPOSITORES PRIMARY KEY(cod_compositores),
+	CONSTRAINT FK_COMPOSITORES FOREIGN KEY(cod_periodos) REFERENCES periodos
 ) on BDSpotPer_fg02
 
 CREATE TABLE AUX03_FAIXAS_COMPOSITORES(
@@ -137,13 +146,7 @@ CREATE TABLE AUX03_FAIXAS_COMPOSITORES(
   	CONSTRAINT FK_AUX03_COMPOSITORES FOREIGN KEY (cod_compositores) REFERENCES compositores
 ) on BDSpotPer_fg02
 
-CREATE TABLE periodos(
-	cod_periodos int NOT NULL,
-  	intervalo int,
-  	descrição varchar(140),
-  	CONSTRAINT FK_PERIODOS PRIMARY KEY (cod_periodos)
-) on BDSpotPer_fg02
-
+/*
 CREATE TABLE AUX04_PERIODOS_COMPOSITORES(
 	cod_compositores int NOT NULL,
   	cod_periodos int NOT NULL,
@@ -151,7 +154,7 @@ CREATE TABLE AUX04_PERIODOS_COMPOSITORES(
   	CONSTRAINT FK_AUX04_COMPOSITORES FOREIGN KEY (cod_compositores) REFERENCES compositores,
   	CONSTRAINT FK_AUX04_PERIODOS FOREIGN KEY (cod_periodos) REFERENCES periodos
 ) on BDSpotPer_fg02
-
+*/
 CREATE TABLE interpretes(
 	cod_interpretes int NOT NULL,
   	nome varchar(40),
@@ -203,12 +206,10 @@ DROP CONSTRAINT FK_AUX01_FAIXAS
 /*
 ALTER TABLE faixas
 DROP CONSTRAINT PK_faixas
-
 CREATE CLUSTERED INDEX IndiceFaixaPrimario
 ON faixas (cod_faixas)
 WITH (PAD_INDEX=OFF, FILLFACTOR=100)
 ON BDSpotPer_fg02
-
 ALTER TABLE faixas
 ADD CONSTRAINT PK_faixas PRIMARY KEY (cod_faixas)
 */
@@ -279,13 +280,13 @@ AS
 	
 	IF(
 		(SELECT cod_faixas FROM inserted)
-		NOT IN
+		IN
 		(SELECT f.cod_faixas 
-		FROM faixas f, AUX03_FAIXAS_COMPOSITORES fc ,compositores c, AUX04_PERIODOS_COMPOSITORES pc, periodos p 
-		WHERE f.cod_faixas = fc.cod_faixas AND fc.cod_compositores = c.cod_compositores AND c.cod_compositores = pc.cod_compositores AND pc.cod_periodos = p.cod_periodos AND p.descrição = 'Barroco' AND f.tipo_gravacao <> 'DDD')
+		FROM faixas f, AUX03_FAIXAS_COMPOSITORES fc ,compositores c, periodos p 
+		WHERE f.cod_faixas = fc.cod_faixas AND fc.cod_compositores = c.cod_compositores AND c.cod_periodos = p.cod_periodos AND p.descrição = 'Barroco' AND f.tipo_gravacao = 'ADD')
 	)
 	BEGIN
-	RAISERROR('Tentando entrar no album faixa do periodo barroco, que não é do tipo DDD', 15, 1)
+	RAISERROR('Só pode adquirir faixa do periodo barroco se for DDD', 15, 1)
 	ROLLBACK TRANSACTION
 	END;
 
@@ -312,75 +313,6 @@ AS
 	ROLLBACK TRANSACTION
 	END
     
-
-CREATE TRIGGER gatilho1_cursor
-ON AUX02_FAIXAS_ALBUNS
-FOR INSERT, UPDATE
-AS
-	DECLARE @cod_faixass int
-	DECLARE cursor_1 CURSOR SCROLL FOR SELECT cod_faixas FROM inserted
-	OPEN cursor_1
-	FETCH first FROM cursor_1 INTO @cod_faixass
-	WHILE(@@FETCH_STATUS = 0)
-	BEGIN
-	IF(
-		(@cod_faixass)
-		NOT IN
-		(SELECT f.cod_faixas 
-		FROM faixas f, AUX03_FAIXAS_COMPOSITORES fc ,compositores c, AUX04_PERIODOS_COMPOSITORES pc, periodos p 
-		WHERE f.cod_faixas = fc.cod_faixas and fc.cod_compositores = c.cod_compositores and c.cod_compositores = pc.cod_compositores and pc.cod_periodos = p.cod_periodos and p.descrição = 'Barroco' and f.tipo_gravacao <> 'DDD')
-	)
-	BEGIN
-	RAISERROR('Tentando entrar no album  faixa do periodo barroco, que não é do tipo DDD', 10, 6)
-	ROLLBACK TRANSACTION
-	END
-	FETCH next FROM cursor_1 INTO @cod_faixass
-	END
-	DEALLOCATE cursor_1
-    
-CREATE TRIGGER gatilho2_cursor
-ON AUX02_FAIXAS_ALBUNS
-FOR INSERT
-AS
-	DECLARE @cod_albuns int
-	DECLARE cursor_2 CURSOR SCROLL FOR (SELECT cod_albuns FROM inserted)
-	OPEN cursor_2
-	FETCH first FROM cursor_2 INTO @cod_albuns
-    WHILE(@@FETCH_STATUS = 0)
-    BEGIN
-	IF(
-	(SELECT COUNT(*)
-	FROM AUX02_FAIXAS_ALBUNS fa
-	WHERE fa.cod_albuns = @cod_albuns) = 65)
-	BEGIN
-	RAISERROR('Album Cheio',10,6)
-	ROLLBACK TRANSACTION
-	END
-    FETCH next FROM cursor_2 INTO @cod_albuns
-	END
-	DEALLOCATE cursor_2
-
-
-CREATE TRIGGER gatilho3_cursor
-ON albuns
-FOR INSERT
-AS
-	DECLARE @preco_comprass int
-	DECLARE cursor_3 CURSOR SCROLL FOR (SELECT preco_compra FROM inserted)
-	OPEN cursor_3
-	FETCH first FROM cursor_3 INTO @preco_comprass
-    WHILE(@@FETCH_STATUS = 0)
-    BEGIN
-	IF(@preco_comprass > (SELECT 3*AVG(preco_compra) FROM albuns a,AUX02_FAIXAS_ALBUNS fa,faixas f WHERE a.cod_album=fa.cod_albuns AND fa.cod_faixas=f.cod_faixas AND f.tipo_gravacao='DDD'))
-	BEGIN
-	RAISERROR('Preco invalido',10,6)
-	ROLLBACK TRANSACTION
-	END
-	FETCH next FROM cursor_3 INTO @preco_comprass
-	END
-	DEALLOCATE cursor_3
-	 
-
 CREATE TRIGGER gatilho4
 ON AUX01_FAIXAS_PLAYLISTS
 FOR INSERT,DELETE
@@ -400,10 +332,117 @@ AS
 	END
     
 ------------------
--- Vamos povoar?--
+-- Alguns testes--
+insert into composicoes values (1, null, null)
+insert into gravadoras values (1,null,null,null)
+insert into albuns values (1,10.0,GETDATE(),GETDATE(),'CD',1,'t')
+
+insert into periodos values (1,10,'Barroco')
+insert into periodos values (2,10,'Renascimento')
+
+insert into compositores values (1,1,null,null,null,null,null,null)
+insert into compositores values (2,2,null,null,null,null,null,null)
+
+insert into faixas values (1,1,3,'DDD',null)
+
+insert into AUX03_FAIXAS_COMPOSITORES values (1,1)
+insert into AUX03_FAIXAS_COMPOSITORES values (1,2)
+
+insert into AUX02_FAIXAS_ALBUNS values (1,1) --Faixa do tipo 
+
+insert into playlists values (1,null,null,null)
+insert into AUX01_FAIXAS_PLAYLISTS values (1,1,0,GETDATE())
 
 
+delete from faixas
+delete from albuns
+
+
+select * from faixas
+
+select * from playlists
+
+select * from AUX01_FAIXAS_PLAYLISTS
+
+select * from albuns
 ----------------
 ---- Consultas--
 
+select * --Lista albuns com preco de compra maior que a media
+from albuns a
+where a.preco_compra >= (select AVG(preco_compra) from albuns)
 
+select c.nome --Lista compositor associado ao maior numero de playlists
+from faixas f, AUX01_FAIXAS_PLAYLISTS fp,AUX03_FAIXAS_COMPOSITORES fc , compositores c
+where f.cod_faixas = fp.cod_faixas and fc.cod_faixas = f.cod_faixas and fc.cod_compositores=c.cod_compositores
+group by c.nome, c.cod_compositores
+having COUNT(*) >= all (select COUNT(*) from faixas f, AUX01_FAIXAS_PLAYLISTS fp,AUX03_FAIXAS_COMPOSITORES fc , compositores c
+						where f.cod_faixas = fp.cod_faixas and fc.cod_faixas = f.cod_faixas and fc.cod_compositores=c.cod_compositores group by c.nome, c.cod_compositores )
+
+create function f3 () -- FUNCIONA COMO AUX_FAIXAS_PLAYLISTS, ENTRETANTO PEGANDO APENAS PLAYLISTS COM FAIXAS COMPOSTAS POR DVORACK
+returns @ret table (cod_playlists int,cod_faixas int)
+as
+begin
+	insert into @ret
+	select fp.cod_playlist,f.cod_faixas
+	from faixas f, AUX03_FAIXAS_COMPOSITORES fc, compositores c, AUX01_FAIXAS_PLAYLISTS fp
+	where f.cod_faixas = fc.cod_faixas and fc.cod_compositores = c.cod_compositores and c.nome = 'Dvorack' and fp.cod_faixas=f.cod_faixas
+	return
+end
+
+select cod_playlist, cod_faixas -- RETORNA COD_PLAYLIST, COD_FAIXAS DE AUX_FAIXAS_PLAYLIST, COM PELO MENOS UMA FAIXA COMPOSTA POR DVORACK
+from AUX01_FAIXAS_PLAYLISTS 
+where cod_playlist in (select cod_playlist from f3())
+
+select g.nome -- MOSTRA NOME DA GRAVADORA COM O MAIOR NUMERO DE PLAYLISTS, LEVANDO EM CONTA APENAS PLAYLISTS QUE POSSUEM PELO MENOS UMA FAIXA COMPOSTA POR DVORACK
+from gravadoras g, albuns a, AUX02_FAIXAS_ALBUNS fa, faixas f, (select cod_playlist, cod_faixas from AUX01_FAIXAS_PLAYLISTS where cod_playlist in (select cod_playlist from f3()) ) as  p
+where g.cod_gravadoras = a.cod_gravadora and a.cod_album = fa.cod_albuns and fa.cod_faixas = f.cod_faixas
+and f.cod_faixas = p.cod_faixas
+group by g.nome
+having count(distinct p.cod_playlist) >= all (
+	select count(distinct p.cod_playlist)
+	from gravadoras g, albuns a, AUX02_FAIXAS_ALBUNS fa, faixas f, (select cod_playlist, cod_faixas from AUX01_FAIXAS_PLAYLISTS where cod_playlist in (select cod_playlist from f3()) ) as  p
+	where g.cod_gravadoras = a.cod_gravadora and a.cod_album = fa.cod_albuns and fa.cod_faixas = f.cod_faixas
+	and f.cod_faixas = p.cod_faixas
+	group by g.nome
+)
+
+
+
+create function f4 (@entrada int) -- RETORNA AS FAIXAS [CONCERTO && BARROCO] DA PLAYLIST DE ENTRADA
+returns @ret table (cod_playlists int,cod_faixas int)
+as
+begin
+	insert into @ret
+	select fp.cod_playlist,fp.cod_faixas
+	from faixas f, AUX03_FAIXAS_COMPOSITORES fc, compositores c, AUX01_FAIXAS_PLAYLISTS fp, composicoes c2, periodos p
+	where f.cod_faixas = fc.cod_faixas and fc.cod_compositores = c.cod_compositores and fp.cod_faixas=f.cod_faixas and f.cod_composicoes = c2.cod_composicoes and p.cod_periodos=c.cod_periodos
+	and c2.tipo_composicao = 'Concerto' and p.descrição='Barroco' and fp.cod_playlist = @entrada
+	return
+end
+
+create function f5() -- RETORNA PLAYLISTS QUE TODAS AS FAIXAS SAO COMPOSICOES DO TIPO CONCERtO E DO PERIODO BARROCO
+returns @ret table (cod_playlists int)
+as
+begin
+	declare c_1 cursor scroll for
+	select cod_playlist from AUX01_FAIXAS_PLAYLISTS
+	declare @cod int 
+	open c_1
+	fetch first from c_1 into @cod 
+	while(@@FETCH_STATUS = 0)
+	begin
+	if(
+		(select count(*) from f4(@cod))
+		=
+		(select count(*) from AUX01_FAIXAS_PLAYLISTS where cod_playlist=@cod)
+	)
+	begin
+		insert into @ret
+		select cod_playlist from AUX01_FAIXAS_PLAYLISTS where cod_playlist=@cod
+	end
+	fetch next from c_1 into @cod
+	end	
+	deallocate c_1
+	return
+end
