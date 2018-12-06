@@ -95,16 +95,17 @@ public class fbd {
     }
     
 public void ouvir_musica(int entrada) {
-        
-
-        System.out.println("Você está ouvindo " ); 
-        try {
+        try{
+		Statement stmt2 = conn.createStatement();
+    	ResultSet rs3 = stmt2.executeQuery("select cod_faixas from faixas where cod_faixas = "+entrada);
+    	rs3.next();
+    	int s = rs3.getInt(1);
+        System.out.println("Você está ouvindo " );
         Statement stmt = conn.createStatement();
        	ResultSet rs = stmt.executeQuery("select * from dbo.funcao2(1)");
        	rs.next();
        	int flag = rs.getInt(1);
         rs.close();
-        System.out.println(flag);
         if(flag!=0){
         	ResultSet rs2 = stmt.executeQuery("select * from AUX01_FAIXAS_PLAYLISTS where cod_faixas="+entrada);
         	rs2.next();
@@ -121,15 +122,12 @@ public void ouvir_musica(int entrada) {
         	
         }
         }catch(SQLException ex){
-        	error = true;
             System.out.println("SQLException: " + ex.getMessage());
             System.out.println("SQLSQLState: " + ex.getSQLState());
             System.out.println("SQLVendorError: " + ex.getErrorCode());
         }
+}
        
-        
-    }
-    
     
     public void listar_albuns() {
     	try {
@@ -145,7 +143,6 @@ public void ouvir_musica(int entrada) {
                 }
                 System.out.println("");
             }}catch(SQLException ex){
-            	error = true;
                 System.out.println("SQLException: " + ex.getMessage());
                 System.out.println("SQLSQLState: " + ex.getSQLState());
                 System.out.println("SQLVendorError: " + ex.getErrorCode());
@@ -208,24 +205,23 @@ public void ouvir_musica(int entrada) {
             	inserir_faixa_playlist(rs.getInt(1), cod_playlist);
             }      
         }catch(SQLException ex){
-        	error =true;
             System.out.println("SQLException: " + ex.getMessage());
             System.out.println("SQLSQLState: " + ex.getSQLState());
             System.out.println("SQLVendorError: " + ex.getErrorCode());
         } 
     }
     
-    public void alterar_album(String ref, int cod, String n_ref, int preco, String tipo_compra, int cod_gravadora ) {
+    public void alterar_album(String ref, int cod, float prcomp, String tipo_compra, int cod_gravadora, String n_ref ) {
     	try{  
             conn.setAutoCommit(false);
-    		String sql = "update album set cod=?, descricao=?, preco_compra=?, data_compra=?, data_gravacao=?, tipo_compra=?, cod_gravadora=? where descricao=?";
+    		String sql = "update albuns set cod_album=?, preco_compra=?, tipo_compra=?, cod_gravadora=?,  descricao=? where descricao=?";
     		PreparedStatement stmt = conn.prepareStatement(sql);
     		stmt.setInt(1,cod);
-    		stmt.setString(2,n_ref);
-    		stmt.setInt(3,preco);
-    		stmt.setString(6,tipo_compra);
-    		stmt.setInt(7, cod_gravadora);
-    		stmt.setString(8,ref);
+    		stmt.setFloat(2,prcomp);
+    		stmt.setString(3,tipo_compra);
+    		stmt.setInt(4,cod_gravadora);
+    		stmt.setString(5, n_ref);
+    		stmt.setString(6,ref);
             stmt.executeUpdate();
             conn.commit();
             conn.setAutoCommit(true);
@@ -244,7 +240,7 @@ public void ouvir_musica(int entrada) {
     }
    
     public static void main(String[] args) {
-        String url = "jdbc:sqlserver://localhost:1141;"
+        String url = "jdbc:sqlserver://localhost:49299;"
                 +"databaseName=BDSpotPer";
         fbd c = new fbd(url);
         int opcao = 0;
@@ -284,9 +280,9 @@ public void ouvir_musica(int entrada) {
                     c.inserir_album_playlist(teclado.nextInt(),teclado.nextInt());
                     break;
                 case 6:
-                	System.out.println("Entre com a ref do album que deseja alterar, seguido de"
-                			+ " cod,ref,preco_compra,tipo_compra,cod_gravadora");
-                    c.alterar_album(teclado.nextLine(),teclado.nextInt(),teclado.next(),teclado.nextInt(),teclado.next(),teclado.nextInt());
+                	System.out.println("Entre com a descricao do album que deseja alterar, seguido dos novos atributos"
+                			+ " cod,preco_compra,tipo_compra,cod_gravadora,descricao");
+                    c.alterar_album(teclado.next(),teclado.nextInt() ,teclado.nextFloat(),teclado.next(),teclado.nextInt(),teclado.next());
                     break;
                 case 0:
                     System.out.println("Exit");
