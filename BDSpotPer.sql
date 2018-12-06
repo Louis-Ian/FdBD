@@ -451,4 +451,4 @@ begin
 	return
 end
 
-select * from albuns
+select * from gravadoras
