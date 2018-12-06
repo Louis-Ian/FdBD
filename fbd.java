@@ -100,7 +100,7 @@ public void ouvir_musica(int entrada) {
     	ResultSet rs3 = stmt2.executeQuery("select cod_faixas from faixas where cod_faixas = "+entrada);
     	rs3.next();
     	int s = rs3.getInt(1);
-        System.out.println("Você está ouvindo " );
+        System.out.println("VocÃª estÃ¡ ouvindo " );
         Statement stmt = conn.createStatement();
        	ResultSet rs = stmt.executeQuery("select * from dbo.funcao2(1)");
        	rs.next();
@@ -214,14 +214,14 @@ public void ouvir_musica(int entrada) {
     public void alterar_album(String ref, int cod, float prcomp, String tipo_compra, int cod_gravadora, String n_ref ) {
     	try{  
             conn.setAutoCommit(false);
-    		String sql = "update albuns set cod_album=?, preco_compra=?, tipo_compra=?, cod_gravadora=?,  descricao=? where descricao=?";
+    		String sql = "update albuns set cod_album=?, preco_compra=?, tipo_compra=?, cod_gravadora=?,  descricao=? where descricao like ?";
     		PreparedStatement stmt = conn.prepareStatement(sql);
     		stmt.setInt(1,cod);
     		stmt.setFloat(2,prcomp);
     		stmt.setString(3,tipo_compra);
     		stmt.setInt(4,cod_gravadora);
     		stmt.setString(5, n_ref);
-    		stmt.setString(6,ref);
+    		stmt.setString(6,'%' + ref + '%');
             stmt.executeUpdate();
             conn.commit();
             conn.setAutoCommit(true);
@@ -240,7 +240,7 @@ public void ouvir_musica(int entrada) {
     }
    
     public static void main(String[] args) {
-        String url = "jdbc:sqlserver://localhost:49299;"
+        String url = "jdbc:sqlserver://localhost:1433;"
                 +"databaseName=BDSpotPer";
         fbd c = new fbd(url);
         int opcao = 0;

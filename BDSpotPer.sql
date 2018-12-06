@@ -1,6 +1,3 @@
---SITE:
---https://codeshare.io/aymP99
-
 -------------------------------------
 ---- Criar o diretório C:\BDSpotPer--
 CREATE DATABASE BDSpotPer
@@ -206,10 +203,12 @@ DROP CONSTRAINT FK_AUX01_FAIXAS
 /*
 ALTER TABLE faixas
 DROP CONSTRAINT PK_faixas
+
 CREATE CLUSTERED INDEX IndiceFaixaPrimario
 ON faixas (cod_faixas)
 WITH (PAD_INDEX=OFF, FILLFACTOR=100)
 ON BDSpotPer_fg02
+
 ALTER TABLE faixas
 ADD CONSTRAINT PK_faixas PRIMARY KEY (cod_faixas)
 */
@@ -249,7 +248,7 @@ BEGIN
 	RETURN
 END
 
-CREATE FUNCTION funcao2(@entrada int)
+CREATE FUNCTION funcao2(@entrada int) --Retorna playlists associadas ao codigo da faixa de entrada
 returns @ret table (cod_playlist int)
 as
 begin
@@ -333,9 +332,9 @@ AS
     
 ------------------
 -- Alguns testes--
-insert into composicoes values (1, null, null)
-insert into gravadoras values (1,null,null,null)
-insert into albuns values (1,10.0,GETDATE(),GETDATE(),'CD',1,'t')
+insert into composicoes values (33, null, null)
+insert into gravadoras values (33,null,null,null)
+insert into albuns values (33,10.0,GETDATE(),GETDATE(),'CD',1,'t')
 
 insert into periodos values (1,10,'Barroco')
 insert into periodos values (2,10,'Renascimento')
@@ -351,14 +350,19 @@ insert into AUX03_FAIXAS_COMPOSITORES values (1,2)
 insert into AUX02_FAIXAS_ALBUNS values (1,1) --Faixa do tipo 
 
 insert into playlists values (1,null,null,null)
-insert into AUX01_FAIXAS_PLAYLISTS values (1,1,0,GETDATE())
+insert into AUX01_FAIXAS_PLAYLISTS values (2,10000,0,GETDATE())
 
 
 delete from faixas
 delete from albuns
 
+select * from gravadoras
 
 select * from faixas
+
+select * from albuns
+
+select * from AUX02_FAIXAS_ALBUNS
 
 select * from playlists
 
@@ -446,3 +450,5 @@ begin
 	deallocate c_1
 	return
 end
+
+select * from albuns
